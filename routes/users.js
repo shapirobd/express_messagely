@@ -1,7 +1,5 @@
 const express = require("express");
 const User = require("../models/user");
-const jwt = require("jsonwebtoken");
-const { SECRET_KEY } = require("../config");
 
 const router = express.Router();
 
@@ -13,7 +11,7 @@ const router = express.Router();
 router.get("/", async (req, res, next) => {
 	try {
 		const users = await User.all();
-		return res.json({ users: users });
+		return res.json({ users });
 	} catch (e) {
 		return next(e);
 	}
@@ -27,7 +25,7 @@ router.get("/", async (req, res, next) => {
 router.get("/:username", async (req, res, next) => {
 	try {
 		const user = await User.get(req.params.username);
-		return res.json({ user: user });
+		return res.json({ user });
 	} catch (e) {
 		return next(e);
 	}
@@ -45,7 +43,7 @@ router.get("/:username", async (req, res, next) => {
 router.get("/:username/to", (req, res, next) => {
 	try {
 		const messages = User.messagesTo(req.params.username);
-		return res.json({ messages: messages });
+		return res.json({ messages });
 	} catch (e) {
 		return next(e);
 	}
@@ -63,7 +61,7 @@ router.get("/:username/to", (req, res, next) => {
 router.get("/:username/from", (req, res, next) => {
 	try {
 		const messages = User.messagesFrom(req.params.username);
-		return res.json({ messages: messages });
+		return res.json({ messages });
 	} catch (e) {
 		return next(e);
 	}
