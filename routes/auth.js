@@ -10,7 +10,15 @@ const router = express.Router();
  * Make sure to update their last-login!
  *
  **/
-
+router.post("/login", async (req, res, next) => {
+	try {
+		const { username, password } = req.body;
+		const token = await User.authenticate(username, password);
+		return res.json({ token });
+	} catch (e) {
+		return next(e);
+	}
+});
 /** POST /register - register user: registers, logs in, and returns token.
  *
  * {username, password, first_name, last_name, phone} => {token}.
