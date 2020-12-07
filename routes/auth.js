@@ -13,8 +13,11 @@ const router = express.Router();
 router.post("/login", async (req, res, next) => {
 	try {
 		const { username, password } = req.body;
-		const token = await User.authenticate(username, password);
-		return res.json({ token });
+		if (await User.authenticate(username, password)) {
+			User.updateLoginTimestamp(username);
+			const token = jwt.sign({ username }, SECRET_KEY);
+			return res.json({ token });
+		}
 	} catch (e) {
 		return next(e);
 	}
@@ -28,8 +31,11 @@ router.post("/login", async (req, res, next) => {
 router.post("/register", async (req, res, next) => {
 	try {
 		const user = await User.register(req.body);
-		const token = jwt.sign({ userame: user.username }, SECRET_KEY);
-		return res.json(token);
+		if (await User.authenticate(user.username, req.body.password)) {
+			await User.updateLoginTimestamp(user.username);
+			const token = jwt.sign({ userame: user.username }, SECRET_KEY);
+			return res.json(token);
+		}
 	} catch (e) {
 		return next(e);
 	}
