@@ -1,6 +1,7 @@
 const express = require("express");
 const Message = require("../models/message");
-const User = require("../models/user");
+const { ensureLoggedIn, ensureCorrectUser } = require("../middleware/auth");
+const ExpressError = require("../expressError");
 
 const router = express.Router();
 
@@ -16,10 +17,21 @@ const router = express.Router();
  * Make sure that the currently-logged-in users is either the to or from user.
  *
  **/
-router.get("/:id", async (req, res, next) => {
+router.get("/:id", ensureLoggedIn, async (req, res, next) => {
 	try {
 		const message = await Message.get(req.params.id);
-		return res.json({ message });
+		console.log(req.user);
+		console.log(message);
+		if (
+			req.user.username === message.from_user.username ||
+			req.user.username === message.to_user.username
+		) {
+			return res.json({ message });
+		}
+		throw new ExpressError(
+			"You must be the recipient or sender of this message to view its details.",
+			401
+		);
 	} catch (e) {
 		return next(e);
 	}
@@ -31,7 +43,7 @@ router.get("/:id", async (req, res, next) => {
  *   {message: {id, from_username, to_username, body, sent_at}}
  *
  **/
-router.post("/", async (req, res, next) => {
+router.post("/", ensureLoggedIn, async (req, res, next) => {
 	try {
 		const message = await Message.create(req.body);
 		return res.json({ message });
@@ -47,10 +59,13 @@ router.post("/", async (req, res, next) => {
  * Make sure that the only the intended recipient can mark as read.
  *
  **/
-router.post("/:id/read", async (req, res, next) => {
+router.post("/:id/read", ensureLoggedIn, async (req, res, next) => {
 	try {
-		const message = await Message.markRead(req.params.id);
-		return res.json(message);
+		const msgSelect = await Message.get(req.params.id);
+		if (msgSelect.to_user.username === req.user.username) {
+			const message = await Message.markRead(req.params.id);
+			return res.json(message);
+		}
 	} catch (e) {
 		return next(e);
 	}
