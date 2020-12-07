@@ -71,9 +71,7 @@ class Message {
           WHERE m.id = $1`,
 			[id]
 		);
-
 		let m = result.rows[0];
-
 		if (!m) {
 			throw new ExpressError(`No such message: ${id}`, 404);
 		}

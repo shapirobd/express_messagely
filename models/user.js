@@ -96,33 +96,33 @@ class User {
 	 */
 
 	static async messagesFrom(username) {
-		const results = await db.query(
-			`SELECT id, to_username, body, sent_at, read_at
-			FROM messages
-			WHERE from_username=$1`,
+		const result = await db.query(
+			`SELECT m.id,
+                m.to_username,
+                u.first_name,
+                u.last_name,
+                u.phone,
+                m.body,
+                m.sent_at,
+                m.read_at
+          FROM messages AS m
+            JOIN users AS u ON m.to_username = u.username
+          WHERE from_username = $1`,
 			[username]
 		);
-		if (results.rows.length === 0) {
-			throw new ExpressError("User not found", 404);
-		}
-		const messages = [];
-		for (let msg of results.rows) {
-			let to_user_results = await db.query(
-				`SELECT username, first_name, last_name, phone
-				FROM users
-				WHERE username=$1`,
-				[msg.to_username]
-			);
-			const to_user = to_user_results.rows[0];
-			messages.push({
-				id: msg.id,
-				to_user,
-				body: msg.body,
-				sent_at: msg.sent_at,
-				read_at: msg.read_at,
-			});
-		}
-		return messages;
+
+		return result.rows.map((m) => ({
+			id: m.id,
+			to_user: {
+				username: m.to_username,
+				first_name: m.first_name,
+				last_name: m.last_name,
+				phone: m.phone,
+			},
+			body: m.body,
+			sent_at: m.sent_at,
+			read_at: m.read_at,
+		}));
 	}
 
 	/** Return messages to this user.
@@ -134,33 +134,33 @@ class User {
 	 */
 
 	static async messagesTo(username) {
-		const results = await db.query(
-			`SELECT id, from_username, body, sent_at, read_at
-			FROM messages
+		const result = await db.query(
+			`SELECT m.id, 
+				m.from_username, 
+				m.body, 
+				m.sent_at, 
+				m.read_at,
+				u.first_name,
+				u.last_name,
+				u.phone
+			FROM messages AS m
+			JOIN users AS u ON m.from_username = u.username
 			WHERE to_username=$1`,
 			[username]
 		);
-		if (results.rows.length === 0) {
-			throw new ExpressError("User not found", 404);
-		}
-		const messages = [];
-		for (let msg of results.rows) {
-			let from_user_results = await db.query(
-				`SELECT username, first_name, last_name, phone
-				FROM users
-				WHERE username=$1`,
-				[msg.from_username]
-			);
-			const from_user = from_user_results.rows[0];
-			messages.push({
-				id: msg.id,
-				from_user,
-				body: msg.body,
-				sent_at: msg.sent_at,
-				read_at: msg.read_at,
-			});
-		}
-		return messages;
+
+		return result.rows.map((m) => ({
+			id: m.id,
+			from_user: {
+				username: m.from_username,
+				first_name: m.first_name,
+				last_name: m.last_name,
+				phone: m.phone,
+			},
+			body: m.body,
+			sent_at: m.sent_at,
+			read_at: m.read_at,
+		}));
 	}
 }
 
